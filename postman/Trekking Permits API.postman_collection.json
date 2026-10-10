@@ -1,0 +1,259 @@
+{
+  "info": {
+    "_postman_id": "b8142206-3862-4c2c-b6da-066ae5fde0b7",
+    "name": "Trekking Permits API",
+    "description": "WEB303 Assignment: two collaborating Go microservices (Route Service and Permit Service) behind a REST API Gateway. Start the system with `docker compose up --build` and run these requests against the gateway at {{baseUrl}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "description": "Checks that the API Gateway is running. Expect 200 OK.",
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+      },
+      "response": []
+    },
+    {
+      "name": "Routes",
+      "description": "Trekking routes, owned by Route Service (Service B) and stored in routes_db.",
+      "item": [
+        {
+          "name": "Create Route",
+          "request": {
+            "description": "Creates a route. Expect 201 Created.",
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Druk Path Trek\",\n  \"dzongkhag\": \"Paro\",\n  \"difficulty\": \"MODERATE\",\n  \"duration_days\": 6,\n  \"max_altitude_m\": 4235,\n  \"max_group_size\": 12\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/routes", "host": ["{{baseUrl}}"], "path": ["routes"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Routes",
+          "request": {
+            "description": "Lists all routes. Expect 200 OK.",
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/routes", "host": ["{{baseUrl}}"], "path": ["routes"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Route by ID",
+          "request": {
+            "description": "Gets one route. Expect 200 OK.",
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/routes/1", "host": ["{{baseUrl}}"], "path": ["routes", "1"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Route - Not Found",
+          "request": {
+            "description": "gRPC NOT_FOUND is mapped to HTTP 404.",
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/routes/999", "host": ["{{baseUrl}}"], "path": ["routes", "999"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Route",
+          "request": {
+            "description": "Updates a route. Expect 200 OK.",
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Snowman Trek\",\n  \"dzongkhag\": \"Gasa\",\n  \"difficulty\": \"HARD\",\n  \"duration_days\": 24,\n  \"max_altitude_m\": 5320,\n  \"max_group_size\": 10\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/routes/3", "host": ["{{baseUrl}}"], "path": ["routes", "3"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Route - Invalid Data",
+          "request": {
+            "description": "Validation: every invalid field is reported. gRPC INVALID_ARGUMENT is mapped to HTTP 400.",
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"dzongkhag\": \"Thimphu\",\n  \"difficulty\": \"EXTREME\",\n  \"duration_days\": 0,\n  \"max_altitude_m\": 9000,\n  \"max_group_size\": 100\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/routes", "host": ["{{baseUrl}}"], "path": ["routes"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Route - Duplicate",
+          "request": {
+            "description": "Route names are unique. gRPC ALREADY_EXISTS is mapped to HTTP 409.",
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Druk Path Trek\",\n  \"dzongkhag\": \"Paro\",\n  \"difficulty\": \"MODERATE\",\n  \"duration_days\": 6,\n  \"max_altitude_m\": 4235,\n  \"max_group_size\": 12\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/routes", "host": ["{{baseUrl}}"], "path": ["routes"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Route",
+          "request": {
+            "description": "Deletes a route. Expect 200 OK.",
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/routes/3", "host": ["{{baseUrl}}"], "path": ["routes", "3"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Permits",
+      "description": "Trekking permits, owned by Permit Service (Service A) and stored in permits_db. Permit Service calls Route Service over gRPC (timeout, retry with backoff, circuit breaker).",
+      "item": [
+        {
+          "name": "Create Permit",
+          "request": {
+            "description": "Creates a permit after confirming the route exists via gRPC. Expect 201 Created with route_name and route_lookup OK. With Route Service stopped: 503.",
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_id\": 1,\n  \"trekker_name\": \"Wangchuk Gyeltshen\",\n  \"email\": \"wangchuk@example.com\",\n  \"group_size\": 4,\n  \"start_date\": \"2026-11-15\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/permits", "host": ["{{baseUrl}}"], "path": ["permits"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Permit by ID",
+          "request": {
+            "description": "Gets one permit enriched with route details. With Route Service stopped: 200 with a FALLBACK route_lookup.",
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/permits/1", "host": ["{{baseUrl}}"], "path": ["permits", "1"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Permits",
+          "request": {
+            "description": "Lists all permits. Expect 200 OK.",
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/permits", "host": ["{{baseUrl}}"], "path": ["permits"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Permit",
+          "request": {
+            "description": "Updates a permit (e.g. approves it). Expect 200 OK.",
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_id\": 1,\n  \"trekker_name\": \"Wangchuk Gyeltshen\",\n  \"email\": \"wangchuk@example.com\",\n  \"group_size\": 6,\n  \"start_date\": \"2026-11-20\",\n  \"status\": \"APPROVED\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/permits/1", "host": ["{{baseUrl}}"], "path": ["permits", "1"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Permit - Invalid Data",
+          "request": {
+            "description": "Validation: all invalid fields are reported. Expect 400.",
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_id\": 0,\n  \"trekker_name\": \"W\",\n  \"email\": \"not-an-email\",\n  \"group_size\": 0,\n  \"start_date\": \"15-11-2026\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/permits", "host": ["{{baseUrl}}"], "path": ["permits"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Permit - Route Does Not Exist",
+          "request": {
+            "description": "Permit Service asks Route Service over gRPC; NOT_FOUND becomes a 400 for the permit request.",
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_id\": 999,\n  \"trekker_name\": \"Pema Wangmo\",\n  \"email\": \"pema@example.com\",\n  \"group_size\": 3,\n  \"start_date\": \"2026-12-01\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/permits", "host": ["{{baseUrl}}"], "path": ["permits"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Permit - Group Too Large",
+          "request": {
+            "description": "Cross-service rule: group_size must not exceed the route's max_group_size (fetched via gRPC). Expect 400.",
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_id\": 3,\n  \"trekker_name\": \"Karma Dorji\",\n  \"email\": \"karma@example.com\",\n  \"group_size\": 15,\n  \"start_date\": \"2026-12-05\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/permits", "host": ["{{baseUrl}}"], "path": ["permits"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Permit - Malformed JSON",
+          "request": {
+            "description": "Wrong field type is rejected by the gateway before reaching any service. Expect 400.",
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_id\": 1,\n  \"trekker_name\": \"Sonam Choden\",\n  \"email\": \"sonam@example.com\",\n  \"group_size\": \"four\",\n  \"start_date\": \"2026-12-10\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/permits", "host": ["{{baseUrl}}"], "path": ["permits"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Permit",
+          "request": {
+            "description": "Deletes a permit. Expect 200 OK, then 404 if sent again.",
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/permits/1", "host": ["{{baseUrl}}"], "path": ["permits", "1"] }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8090",
+      "type": "string"
+    }
+  ]
+}
