@@ -4,6 +4,7 @@ go 1.27.0
 
 require (
 	github.com/jackc/pgx/v5 v5.11.0
+	github.com/sony/gobreaker/v2 v2.4.0
 	google.golang.org/grpc v1.84.0
 	google.golang.org/protobuf v1.36.12
 )
