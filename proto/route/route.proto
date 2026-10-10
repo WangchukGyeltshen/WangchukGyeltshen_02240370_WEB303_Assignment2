@@ -1,0 +1,66 @@
+// route.proto
+// Contract for the Route Service (Service B).
+// Route Service owns trekking routes and exposes full CRUD over gRPC.
+syntax = "proto3";
+
+package route;
+
+option go_package = "trekking/proto/route;routepb";
+
+// RouteService manages trekking routes in its own database (routes_db).
+service RouteService {
+  rpc CreateRoute (CreateRouteRequest) returns (Route);
+  rpc GetRoute (GetRouteRequest) returns (Route);
+  rpc ListRoutes (ListRoutesRequest) returns (ListRoutesResponse);
+  rpc UpdateRoute (UpdateRouteRequest) returns (Route);
+  rpc DeleteRoute (DeleteRouteRequest) returns (DeleteRouteResponse);
+}
+
+// Route is a trekking route in Bhutan.
+message Route {
+  int64 id = 1;
+  string name = 2;            // e.g. "Druk Path Trek"
+  string dzongkhag = 3;       // e.g. "Paro"
+  string difficulty = 4;      // EASY, MODERATE or HARD
+  int32 duration_days = 5;
+  int32 max_altitude_m = 6;
+  int32 max_group_size = 7;   // largest group allowed on one permit
+  string created_at = 8;
+}
+
+message CreateRouteRequest {
+  string name = 1;
+  string dzongkhag = 2;
+  string difficulty = 3;
+  int32 duration_days = 4;
+  int32 max_altitude_m = 5;
+  int32 max_group_size = 6;
+}
+
+message GetRouteRequest {
+  int64 id = 1;
+}
+
+message ListRoutesRequest {}
+
+message ListRoutesResponse {
+  repeated Route routes = 1;
+}
+
+message UpdateRouteRequest {
+  int64 id = 1;
+  string name = 2;
+  string dzongkhag = 3;
+  string difficulty = 4;
+  int32 duration_days = 5;
+  int32 max_altitude_m = 6;
+  int32 max_group_size = 7;
+}
+
+message DeleteRouteRequest {
+  int64 id = 1;
+}
+
+message DeleteRouteResponse {
+  string message = 1;
+}

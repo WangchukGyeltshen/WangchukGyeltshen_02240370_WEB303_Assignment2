@@ -1,0 +1,74 @@
+// permit.proto
+// Contract for the Permit Service (Service A).
+// Permit Service owns trekking permits. A permit depends on a route,
+// so Permit Service calls Route Service over gRPC when creating,
+// updating or retrieving permits.
+syntax = "proto3";
+
+package permit;
+
+option go_package = "trekking/proto/permit;permitpb";
+
+// PermitService manages trekking permits in its own database (permits_db).
+service PermitService {
+  rpc CreatePermit (CreatePermitRequest) returns (Permit);
+  rpc GetPermit (GetPermitRequest) returns (Permit);
+  rpc ListPermits (ListPermitsRequest) returns (ListPermitsResponse);
+  rpc UpdatePermit (UpdatePermitRequest) returns (Permit);
+  rpc DeletePermit (DeletePermitRequest) returns (DeletePermitResponse);
+}
+
+// Permit is a trekking permit issued for one route.
+message Permit {
+  int64 id = 1;
+  int64 route_id = 2;
+  string trekker_name = 3;
+  string email = 4;
+  int32 group_size = 5;
+  string start_date = 6;      // format YYYY-MM-DD
+  string status = 7;          // PENDING, APPROVED or CANCELLED
+  string created_at = 8;
+
+  // Route details fetched from Route Service (not stored in permits_db).
+  string route_name = 9;
+  string route_dzongkhag = 10;
+  // "OK" when route details were fetched, or a fallback note
+  // when Route Service is unavailable.
+  string route_lookup = 11;
+}
+
+message CreatePermitRequest {
+  int64 route_id = 1;
+  string trekker_name = 2;
+  string email = 3;
+  int32 group_size = 4;
+  string start_date = 5;
+}
+
+message GetPermitRequest {
+  int64 id = 1;
+}
+
+message ListPermitsRequest {}
+
+message ListPermitsResponse {
+  repeated Permit permits = 1;
+}
+
+message UpdatePermitRequest {
+  int64 id = 1;
+  int64 route_id = 2;
+  string trekker_name = 3;
+  string email = 4;
+  int32 group_size = 5;
+  string start_date = 6;
+  string status = 7;
+}
+
+message DeletePermitRequest {
+  int64 id = 1;
+}
+
+message DeletePermitResponse {
+  string message = 1;
+}
