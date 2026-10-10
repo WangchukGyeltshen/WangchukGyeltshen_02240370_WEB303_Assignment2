@@ -1,0 +1,8 @@
+# Keep the Docker build context small
+.git
+.gitignore
+*.exe
+*.md
+postman/
+docs/
+.env

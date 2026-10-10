@@ -1,0 +1,17 @@
+# Go build output
+*.exe
+*.test
+*.out
+bin/
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local environment config (secrets). Commit .env.example instead.
+.env
